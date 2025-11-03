@@ -1,4 +1,3 @@
-````markdown
 # API ANA - Monitor de Nível do Guaíba
 
 Sistema Python para monitoramento automatizado do nível do Rio Guaíba através da API HidroWeb da ANA (Agência Nacional de Águas e Saneamento Básico) com integração Firebase.
@@ -24,7 +23,7 @@ O núcleo de comunicação com a API ANA foi implementado seguindo a documentaç
 
 As principais adaptações realizadas foram:
 
-- Código feito em Python 3
+- Código feito em Python
 - Implementação de coleta automática periódica
 - Integração com Firebase para disponibilização em tempo real
 - Sistema de detecção de mudanças para otimização de tráfego
@@ -65,6 +64,7 @@ cd apiANA
 # Instale as dependências
 pip install requests schedule firebase-admin
 ```
+
 ````
 
 ## Configuração
@@ -128,8 +128,8 @@ apiANA/
 
 ```json
 {
-  "nivel": 2.45,
-  "timestamp": "14:30 15-11-2024",
+  "nivel": 0.77,
+  "timestamp": "07:00 03-11-2025",
   "labelVersao": "Versão 2.1.0",
   "labelCotaAlerta": "Cota de alerta 3.15m",
   "labelCotaInundacao": "Cota de inundação 3.60m",
@@ -145,8 +145,8 @@ O arquivo `nivel.json` é atualizado a cada coleta:
 
 ```json
 {
-  "nivel": 2.45,
-  "data_medicao": "15/11/2024 14:30"
+  "nivel": 0.77,
+  "data_medicao": "03/11/2025 07:00"
 }
 ```
 
@@ -177,9 +177,9 @@ Edite o arquivo `caisMaua.log` com o código da estação desejada.
 O sistema fornece feedback detalhado no console:
 
 ```
-15/11/2024 14:30:00 - Coletando...
+03/11/2025 07:00:00 - Coletando...
 Firebase inicializado com sucesso
-Nivel do Guaiba: 2.45m (15/11/2024 14:30) - DADO NOVO
+Nivel do Guaiba: 0.77m (03/11/2025 07:00) - DADO NOVO
 Enviando para Firebase...
 Dados enviados para Firebase
 ```
@@ -224,11 +224,8 @@ O código de comunicação com a API ANA foi baseado nos exemplos oficiais forne
 
 ---
 
-**Última atualização**: Novembro 2025  
-**Versão do Sistema**: 2.1.0  
-**Base Técnica**: API HidroWeb ANA - Exemplos Oficiais  
+**Última atualização**: Novembro 2025
+**Versão do Sistema**: 2.1.0
+**Base Técnica**: API HidroWeb ANA - Exemplos Oficiais
 **Status Legal**: Dados Públicos - Conforme LGPD
-
-```
-
-```
+````
