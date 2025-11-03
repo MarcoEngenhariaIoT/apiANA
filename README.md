@@ -65,8 +65,6 @@ cd apiANA
 pip install requests schedule firebase-admin
 ```
 
-````
-
 ## Configuração
 
 ### 1. Credenciais da ANA
@@ -228,4 +226,3 @@ O código de comunicação com a API ANA foi baseado nos exemplos oficiais forne
 **Versão do Sistema**: 2.1.0
 **Base Técnica**: API HidroWeb ANA - Exemplos Oficiais
 **Status Legal**: Dados Públicos - Conforme LGPD
-````
