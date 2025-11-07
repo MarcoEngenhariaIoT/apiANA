@@ -1,7 +1,7 @@
 # apiANA.py
 # Sistema de monitoramento do nível do Guaíba com integração Firebase
 # Coleta dados da ANA (Agência Nacional de Águas) e envia para Firebase
-# Execução automática a cada 30 minutos
+# Execução automática a cada 15 minutos
 
 import time
 import schedule
@@ -11,10 +11,14 @@ import firebase_admin
 from firebase_admin import credentials, db
 from datetime import datetime
 
+versao = "Versão 2.1.1"
+tempoColeta = 15
+alerta = 3.15
+inundacao = 3.60
 class MonitorGuaiba:
     """
     Classe principal para monitoramento do nível do Guaíba
-    Implementa padrão Singleton para garantir única instância
+    Implementado padrão Singleton
     """
     
     _instance = None
@@ -29,13 +33,13 @@ class MonitorGuaiba:
         """Inicializa variáveis e configurações do sistema"""
         
         # Configurações do aplicativo
-        self.cotaAlerta = 3.15
-        self.cotaInundacao = 3.60
-        self.labelVersao = "Versão 2.1.0"
-        self.labelCotaAlerta = "Cota de alerta 3.15m"
-        self.labelCotaInundacao = "Cota de inundação 3.60m"
+        self.cotaAlerta = alerta
+        self.cotaInundacao = inundacao
+        self.labelVersao = versao
+        self.labelCotaAlerta = f'Cota de alerta {self.cotaAlerta}m'
+        self.labelCotaInundacao = f'Cota de inundação {self.cotaInundacao}0m'
         self.labelEstacao = "Estação: Cais Mauá C6"
-        self.labelFree = "Aplicativo experimental de uso livre sem fins lucrativos, os dados coletados podem conter erros e não nos responsabilizamos pelo mau uso dessas informações, para tomada de decisão recomendamos consultar diretamente a fonte confiável com o SNIRH/ANA."
+        self.labelFree = "Aplicativo experimental de uso livre sem fins lucrativos, desenvolvido como critério de avaliação da faculdade Estácio no curso de Programacão Para Dispositivos Móveis em Android. Os dados coletados podem conter erros e não nos responsabilizamos pelo mau uso dessas informações, para tomada de decisão recomendamos consultar diretamente a fonte confiável com o SNIRH/ANA."
         
         # Controle de estado
         self.nivel_anterior = None
@@ -50,7 +54,7 @@ class MonitorGuaiba:
         Carrega configurações do arquivo firebase.log
         """
         try:
-            with open("firebase.log") as f:
+            with open("/etc/relepi/apiANA/firebase.log") as f:
                 firebase_config = json.load(f)
             
             cred_path = firebase_config['firebase_config']
@@ -69,13 +73,13 @@ class MonitorGuaiba:
         """
         Coleta nível atual do Guaíba da API da ANA
         Retorna: (nivel, houve_mudanca) onde:
-          - nivel: float com nível em metros (None se erro)
+          - nivel: float com nível em cm (None se erro)
           - houve_mudanca: boolean indicando se houve mudança significativa
         """
         
         try:
             # Carrega credenciais de acesso à ANA
-            with open("caisMaua.log") as f:
+            with open("/etc/relepi/apiANA/caisMaua.log") as f:
                 cred = json.load(f)
             
             # Obtém token de autenticação
@@ -95,18 +99,22 @@ class MonitorGuaiba:
                     'Código da Estação': cred['codigo_estacao'],
                     'Tipo Filtro Data': 'DATA_ULTIMA_ATUALIZACAO',
                     'Data de Busca (yyyy-MM-dd)': datetime.now().strftime('%Y-%m-%d'),
-                    'Range Intervalo de busca': 'MINUTO_30'
+                    'Range Intervalo de busca': 'MINUTO_15'
                 },
                 headers={'Authorization': f'Bearer {token}'}
             )
             
             dados = resp.json()
+            #print(dados)  # Debug: imprime dados recebidos
             
             if dados['items']:
                 # Encontra medição mais recente
                 item = max(dados['items'], key=lambda x: x.get('Data_Hora_Medicao', ''))
+                #print(f" Dado coletado item: {item}")
                 cota = float(item['Cota_Adotada'])
+                print(f" Dado coletado cota: {cota}")
                 data_medicao = item['Data_Hora_Medicao']
+                print(f" Dado coletado data_medicao: {data_medicao}")
                 
                 nivel = cota / 100  # Converte de cm para m
                 
@@ -121,7 +129,7 @@ class MonitorGuaiba:
                     'data_medicao': data_formatada
                 }
                 
-                with open('nivel.json', 'w') as f:
+                with open('/etc/relepi/apiANA/nivel.json', 'w') as f:
                     json.dump(dados_firebase, f, indent=2)
                 
                 # Verifica mudança significativa (arredondada para 2 casas decimais)
@@ -157,7 +165,7 @@ class MonitorGuaiba:
             
             # Envia todos os dados para Firebase
             ref.set({
-                'nivel': nivel,  # Número decimal
+                'nivel': nivel,
                 'timestamp': f'"{timestamp}"',
                 'labelVersao': f'"{self.labelVersao}"',
                 'labelCotaAlerta': f'"{self.labelCotaAlerta}"',
@@ -180,7 +188,7 @@ class MonitorGuaiba:
         
         try:
             resultado = self.coletar_nivel()
-            if resultado[0] is not None:  # Se tem dados
+            if resultado[0] is not None:
                 nivel, houve_mudanca = resultado
                 if houve_mudanca:
                     print("Enviando para Firebase...")
@@ -203,10 +211,10 @@ class MonitorGuaiba:
         # Executa primeira coleta imediatamente
         self.executar_coleta()
         
-        # Agenda coleta a cada 30 minutos
-        schedule.every(30).minutes.do(self.executar_coleta)
+        # Agenda coletas periódicas
+        schedule.every(tempoColeta).minutes.do(self.executar_coleta)
         
-        print("Coletor automatico iniciado (30min)")
+        print("Coletor automatico iniciado ({tempoColeta}min)")
         
         # Loop principal
         while True:
